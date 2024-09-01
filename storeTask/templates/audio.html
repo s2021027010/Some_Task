@@ -1,0 +1,52 @@
+{% load static %} {% if user.is_authenticated %} {% include 'headerTask.html' %}
+{% block content %}
+<head>
+  <title>Audio Page</title>
+</head>
+
+<body>
+  <div class="container bg-light">
+      
+    <center>
+      <h1>Audio</h1>
+    </center>
+    {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+      <li {% if message.tags %} style="color: rgb(230, 6, 6)" class="{{ message.tags }}" {% endif %} >  {{ message }}</li>
+      {% endfor %}
+    </ul> 
+    {% endif %}
+  </div>
+  <div class="container bg-light"> 
+    <audio id="record"></audio>
+    {% comment %} <input id="inputView" class="form-control"> {% endcomment %}
+     <button id="start" onclick="startRecord()" class="btn btn-success" >Start Recording</button>
+     <button id="stop" onclick="stopRecord()" class="btn btn-danger" hidden>Stop Recording</button>
+  </div>
+
+
+  <div class="container">
+    <form action="{% url 'Adio' %}" method="post" enctype="multimedia/part">
+        {% csrf_token %}
+    <textarea type="text" id="data_aud" name="data_aud" class="form-control"></textarea>
+    
+    <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  </div>
+<div class="container">
+  {%  for aud in aud_show %}
+<audio controls>
+  <source src="{{BASE_DIR}}/media/{{aud.aud_file}}" type="audio/ogg">
+  <source src="{{BASE_DIR}}/media/{{aud.aud_file}}" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+   {% endfor %}
+</div>
+
+  {% endblock %} {% include 'footerTask.html' %} {% endif %}
+
+
+  
+  <script src="{% static 'storeTask/js/aud_task.js' %}"></script>
+</body> 
