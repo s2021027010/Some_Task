@@ -1,0 +1,64 @@
+{% load static %} {% if user.is_authenticated %} {% include 'headerTask.html' %}
+{% block content %}
+<head>
+  <title>Image Page</title>
+</head>
+
+<body>
+  <div class="container bg-light">
+    <center>
+      <h1>Image</h1>
+    </center>
+    {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+      <li {% if message.tags %} style="color: rgb(230, 6, 6)" class="{{ message.tags }}" {% endif %} >
+        {{ message }}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  <div class="container bg-light">
+    <h1>Webcam Capture</h1>
+    <video id="videoElement" autoplay></video>
+    <button id="startButton">Start Webcam</button>
+    <button id="captureButton">Capture Photo</button>
+    <canvas id="canvasElement" style="display: none" ></canvas> 
+    <img id="photoElement" style="display: none" hidden />
+
+  </div>
+  <div class="container">
+    <form action="{% url 'Imge' %}" method="post" enctype="multimedia/part">
+        {% csrf_token %}
+    <textarea type="text" id="data_img" name="data_img" class="form-control"></textarea>
+    
+    <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  </div>
+  
+  </div>
+  
+
+  <div class="container">
+   
+     {{data_coded}}
+      
+  </div>
+</br> 
+  <div class="container">
+     {%  for img in img_show %}
+    <img src="{{BASE_DIR}}/media/{{img.img_file}}" width="25%" hieght="25%" /></br>
+    <label >{{img.img_file}}</label>
+  </br>
+    {% endfor %}
+  </div>  
+
+
+
+  {% endblock %} {% include 'footertask.html' %} {% endif %}
+
+  
+    <script src="{% static 'storeTask/js/img_task.js' %}"></script>
+</body>
+ 

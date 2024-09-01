@@ -1,0 +1,57 @@
+{% load static %} {% include 'header.html' %}
+<head>
+  <title>Register Page</title>
+</head>
+
+<body>
+  <div class="container bg-light ">
+    <center>
+      <h1>Register</h1>
+    </center>
+     {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li {% if message.tags %} style="color: rgb(230, 6, 6);" class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+            <div class="container col-sm-10 my-3">
+                <input type="text" name="fname" id="fname" placeholder="Frist Name" class="form-control my-2"></input>
+                <input type="text" name="lname" id="lname" placeholder="Last Name" class="form-control my-2"></input>
+                <input type="email" name="email" id="email" placeholder="Email Address"  class="form-control my-2"></input>
+                <input type="password" name="password" id="password" placeholder="Password"  class="form-control my-2"></input> 
+                <input type="password" name="conf-password" id="conf-password" placeholder="Confrim Password"  class="form-control my-2"></input> 
+                <select id="options"  name="gender"  class="selectdata custom-select form-control" required>
+                        <option  value="" disabled selected>Select Gender</option>
+                        <option  name="gender" value="Male">Male</option>
+                        <option  name="gender" value="Female">Female</option>
+                        <option  name="gender" value="Other">Other</option>
+                </select> 
+                <input type="date" name="dob" id="dob" placeholder="Date of Birth"  class="form-control my-2"></input> 
+                <input type="text" name="image" id="imageData" placeholder="Image Base64"  class="form-control my-2" ></input>    
+            </div>
+            <div class="container col-sm-2">
+                <canvas id="canvas" style="overflow:auto"  width="200" height="200" ></canvas>
+                <img id="previewImg" style="width: 200px; height: 200px;" hidden/>  
+                <button type="button" id="btnUpload" onclick="document.getElementById('imgFile').style.display='block'" class="w3-button w3-white form-control">Upload Image </button>
+            </div>
+        </div>
+    <center>
+      <button type="submit" class="btn btn-success">Register</button>
+      <a href="{% url 'logIn' %}" class="btn btn-light mx-3 end">Login</a>
+    </center> 
+</from>
+ <div id="imgFile" class="w3-modal">
+    {% include 'modalShow.html' %}
+  </div> 
+
+  </div>
+
+  {% include 'footer.html' %}
+</body>
+
+    {% load static %}
+    <script src="{% static 'js/img.js' %}"></script>

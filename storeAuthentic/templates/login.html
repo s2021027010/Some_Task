@@ -1,0 +1,33 @@
+{% load static %} {% include 'header.html' %}
+<head>
+  <title>Login Page</title>
+</head>
+
+<body>
+  <div class="container bg-light ">
+    <center>
+      <h1>Login</h1>
+    </center>
+ {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li {% if message.tags %} style="color: rgb(230, 6, 6);" class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <form action="{% url 'logIn' %}" method="post" enctype="multimedia/part">
+        {% csrf_token %}
+    <div class="container col-sm-6 my-3">
+        <input type="email" name="email" id="email" class="form-control my-2"></input>
+        <input type="password" name="password" id="password" class="form-control my-2"></input> 
+    </div>
+    <center>
+      <button  type="submit" class="btn btn-success">Login</button>
+      <a href="{% url 'register' %}" class="btn btn-light mx-3 end">Register</a>
+    </center>
+</from>
+
+  </div>
+
+  {% include 'footer.html' %}
+</body>

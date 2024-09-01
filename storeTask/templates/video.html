@@ -1,0 +1,54 @@
+{% load static %} {% if user.is_authenticated %} {% include 'headerTask.html' %}
+{% block content %}
+<head>
+  <title>Video Page</title>
+</head>
+
+<body>
+  <div class="container bg-light">
+     
+    <center>
+      <h1>Video</h1>
+    </center>
+    {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+      <li {% if message.tags %} style="color: rgb(230, 6, 6)" class="{{ message.tags }}" {% endif %} >  {{ message }}</li>
+      {% endfor %}
+    </ul> 
+    {% endif %}
+  </div>
+  <div class="container bg-light">    
+     <p><video id="video" autoplay width="320" /><p>
+<p><button onclick="startFunction()">Start recording</button></p>
+<p><button onclick="download()">stop video</button></p>
+</div> 
+  </div>
+
+
+  <div class="container">
+    <form action="{% url 'Vdeo' %}" method="post" enctype="multimedia/part">
+        {% csrf_token %}
+    <textarea type="text" id="data_vid" name="data_vid" class="form-control"></textarea>
+    
+    <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  </div>
+
+
+  <div class="container">
+     {%  for vid in vid_show %}
+      <video  controls class="video/mp4"  width="25%" hieght="25%" >
+        <source src="{{BASE_DIR}}/media/{{vid.vid_file}}" width="25%" hieght="25%" class="video/mp4" type="video/mp4">	 
+      </video>
+  </br>
+    <label >{{vid.vid_file}}</label>
+  </br>
+    {% endfor %}
+  </div>
+  {% endblock %} {% include 'footerTask.html' %} {% endif %}
+
+
+  <script src="{% static 'storeTask/js/vid_task.js' %}"></script>
+</body> 
+ 

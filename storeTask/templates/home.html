@@ -1,0 +1,29 @@
+{% load static %} {% if user.is_authenticated %} {% include 'headerTask.html' %}
+{% block content %}
+<head>
+  <title>Home Page</title>
+</head>
+
+<body>
+  <div class="container bg-light">
+     
+    <center>
+      <h1>Home</h1>
+    </center>
+    {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+      <li {% if message.tags %} style="color: rgb(230, 6, 6)" class="{{ message.tags }}" {% endif %} >  {{ message }}</li>
+      {% endfor %}
+    </ul> 
+    {% endif %}
+  </div>
+  <div class="container bg-light"> 
+    <label>{{user.email}}</label>
+    <label>{{user.first_name}}</label>
+    <label>{{user.last_name}}</label>
+    <label>{{user.gender}}</label>
+    <img src="{{BASE_DIR}}/media/{{user.profile_image}}" width="100" height="100" ></img>
+  </div>
+  {% endblock %} {% include 'footerTask.html' %} {% endif %}
+</body>

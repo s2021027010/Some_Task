@@ -1,0 +1,674 @@
+{% load static %} {% if user.is_authenticated %} {% include 'headerTask.html' %}
+{% block content %}
+<head>
+  <title>Map Page</title>
+</head>
+   
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body, html { height: 100%; margin: 0; padding: 0; }
+        #map { height: 90%; width: 100%; }
+        #controls {
+            height: 10%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: #fff;
+        }
+    </style>
+
+
+
+<body>
+  <div class="container bg-light">
+    <center>
+      <h1>Map</h1>
+    </center>
+    {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+      <li {% if message.tags %} style="color: rgb(230, 6, 6)" class="{{ message.tags }}" {% endif %} >
+        {{ message }}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+    </br></br>
+    <div class="container mx-3 my-3">
+        <h3>Maped Data</h3>
+    </div>
+    
+     
+</br>
+<div class="container">
+    <form action="{% url 'map' %}" method="post" enctype="multimedia/part">
+        {% csrf_token %}
+    <p>
+    <label>Start</label>
+        <input class="form-control" name="start"  id="start"  oninput="startfetchCoordinates()" /> 
+        <label>End</label>
+        <input class="form-control" name="end" id="end"  oninput="endfetchCoordinates()"/>
+    </br>
+        <label>Address</label>
+        <input class="form-control"  name="start_lat" id="start_lat"  value="" />
+        <input class="form-control"  name="start_lon" id="start_lon" value="" />
+        
+        <input class="form-control" name="end_lat" id="end_lat" value="" />
+        <input class="form-control"  name="end_lon" id="end_lon" value="" />
+    </p>
+    <button type="submit" class="btn btn-primary" >Find Location</button>
+    </form>
+</div>
+
+</br>
+
+ 
+
+   {{map|safe}}
+
+
+<script>  
+      
+        function startfetchCoordinates() { 
+            var start = document.getElementById('start').value;  
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${start}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        var latitude1 = data[0].lat;
+                        var longitude1 = data[0].lon;
+                        var coordinates = [latitude1, longitude1];
+                        // initMap(latitude, longitude, location); 
+                        document.getElementById('start_lat').value = latitude1;
+                        document.getElementById('start_lon').value = longitude1;
+                    } else {
+                        console.error('Location not found: ' + location);
+                    }
+                })
+                .catch(error => console.error('Error fetching location data:', error));
+
+        }  
+
+         function endfetchCoordinates() {  
+            var end = document.getElementById('end').value; 
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${end}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        var latitude2 = data[0].lat;
+                        var longitude2 = data[0].lon;
+                        var coordinates = [latitude2, longitude2]; 
+                        document.getElementById('end_lat').value = latitude2;
+                        document.getElementById('end_lon').value = longitude2;
+                    } else {
+                        console.error('Location not found: ' + location);
+                    }
+                })
+                .catch(error => console.error('Error fetching location data:', error));
+        }  
+    </script>
+ 
+ 
+
+
+{% comment %} 
+<div id="controls">
+        <input id="start" type="text" placeholder="Start location (e.g., Berlin)">
+        <input id="end" type="text" placeholder="End location (e.g., Munich)">
+        <button onclick="getDirections()">Get Directions</button>
+        <button onclick="getLocation()">Show My Location</button>
+    </div>
+    <div id="map"></div>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.js'></script>
+    <script>
+        mapboxgl.accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN';
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [13.4050, 52.5200], // Default to Berlin
+            zoom: 6
+        });
+
+        var startMarker, endMarker, routeLayer;
+
+        function addMarker(lng, lat, label) {
+            return new mapboxgl.Marker().setLngLat([lng, lat]).setPopup(new mapboxgl.Popup().setText(label));
+        }
+
+        function getDirections() {
+            var startLocation = document.getElementById('start').value;
+            var endLocation = document.getElementById('end').value;
+
+            fetch(`/get_route/?start=${startLocation}&end=${endLocation}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (routeLayer) {
+                        map.removeLayer(routeLayer);
+                    }
+
+                    var coordinates = data.routes[0].geometry.coordinates;
+                    var geojson = {
+                        type: 'Feature',
+                        properties: {},
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: coordinates
+                        }
+                    };
+
+                    if (map.getSource('route')) {
+                        map.getSource('route').setData(geojson);
+                    } else {
+                        map.addSource('route', {
+                            type: 'geojson',
+                            data: geojson
+                        });
+
+                        map.addLayer({
+                            id: 'route',
+                            type: 'line',
+                            source: 'route',
+                            layout: {
+                                'line-join': 'round',
+                                'line-cap': 'round'
+                            },
+                            paint: {
+                                'line-color': '#888',
+                                'line-width': 6
+                            }
+                        });
+                    }
+
+                    if (startMarker) {
+                        startMarker.remove();
+                    }
+                    if (endMarker) {
+                        endMarker.remove();
+                    }
+
+                    startMarker = addMarker(coordinates[0][0], coordinates[0][1], 'Start').addTo(map);
+                    endMarker = addMarker(coordinates[coordinates.length - 1][0], coordinates[coordinates.length - 1][1], 'End').addTo(map);
+
+                    map.fitBounds([
+                        [coordinates[0][0], coordinates[0][1]],
+                        [coordinates[coordinates.length - 1][0], coordinates[coordinates.length - 1][1]]
+                    ], {
+                        padding: { top: 10, bottom: 25, left: 15, right: 5 }
+                    });
+                });
+        }
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function showPosition(position) {
+            var lng = position.coords.longitude;
+            var lat = position.coords.latitude;
+
+            map.setCenter([lng, lat]);
+            map.setZoom(13);
+
+            if (startMarker) {
+                startMarker.remove();
+            }
+            startMarker = addMarker(lng, lat, 'You are here!').addTo(map);
+        }
+    </script> {% endcomment %}
+
+{% comment %} 
+<div id="map"></div>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    <script>
+        var map = L.map('map').setView([51.505, -0.09], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        var points = [
+            {lat: 51.505, lon: -0.09, name: 'Point 1'},
+            {lat: 51.51, lon: -0.1, name: 'Point 2'},
+            {lat: 51.52, lon: -0.12, name: 'Point 3'}
+        ];
+
+        points.forEach(function(point) {
+            L.marker([point.lat, point.lon]).addTo(map).bindPopup(point.name);
+        });
+
+        points.forEach(function(point1, index) {
+            points.slice(index + 1).forEach(function(point2) {
+                var from = turf.point([point1.lon, point1.lat]);
+                var to = turf.point([point2.lon, point2.lat]);
+                var distance = turf.distance(from, to, { units: 'kilometers' });
+                console.log('Distance from ' + point1.name + ' to ' + point2.name + ': ' + distance.toFixed(2) + ' km');
+            });
+        });
+
+        var control = L.Routing.control({
+            waypoints: [
+                L.latLng(51.505, -0.09),
+                L.latLng(51.51, -0.1),
+                L.latLng(51.52, -0.12)
+            ],
+            router: L.Routing.osrmv1({
+                serviceUrl: 'https://router.project-osrm.org/route/v1'
+            }),
+            geocoder: L.Control.Geocoder.nominatim()
+        }).addTo(map);
+    </script> {% endcomment %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% comment %} 
+ <div id="floating-panel">
+        <b>Start: </b>
+        <input id="start" type="textbox" >
+        <b>End: </b>
+        <input id="end" type="textbox" >  
+        <button onclick="getDirections()">Get Directions</button>
+        <button onclick="getLocation()">Show My Location</button>
+    </div>
+    <div id="map" class="map"></div>
+    <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+    <script>
+        var map = new ol.Map({
+            target: 'map',
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM()
+                })
+            ],
+            view: new ol.View({
+                center: ol.proj.fromLonLat([13.4050, 52.5200]), // Default to Berlin
+                zoom: 6
+            })
+        });
+
+        var startMarker, endMarker, routeLayer;
+
+        // Function to add a marker
+        function addMarker(coordinate, label) {
+            return new ol.Feature({
+                geometry: new ol.geom.Point(coordinate),
+                name: label
+            });
+        }
+
+        // Function to get directions
+        function getDirections() {
+            var startLocation = document.getElementById('start').value;
+            var endLocation = document.getElementById('end').value;
+
+            // Geocode the start and end locations
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${startLocation}`)
+                .then(response => response.json())
+                .then(startData => {
+                    var startCoord = ol.proj.fromLonLat([parseFloat(startData[0].lon), parseFloat(startData[0].lat)]);
+
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${endLocation}`)
+                        .then(response => response.json())
+                        .then(endData => {
+                            var endCoord = ol.proj.fromLonLat([parseFloat(endData[0].lon), parseFloat(endData[0].lat)]);
+
+                            // Display markers for start and end locations
+                            var vectorSource = new ol.source.Vector({
+                                features: [
+                                    addMarker(startCoord, 'Start'),
+                                    addMarker(endCoord, 'End')
+                                ]
+                            });
+
+                            var vectorLayer = new ol.layer.Vector({
+                                source: vectorSource
+                            });
+
+                            map.addLayer(vectorLayer);
+
+                            // Get route from OSRM API
+                            fetch(`https://router.project-osrm.org/route/v1/driving/${startData[0].lon},${startData[0].lat};${endData[0].lon},${endData[0].lat}?overview=full&geometries=geojson`)
+                                .then(response => response.json())
+                                .then(routeData => {
+                                    var route = new ol.format.GeoJSON().readFeature(routeData.routes[0].geometry, {
+                                        featureProjection: 'EPSG:3857'
+                                    });
+
+                                    var routeSource = new ol.source.Vector({
+                                        features: [route]
+                                    });
+
+                                    if (routeLayer) {
+                                        routeLayer.setSource(routeSource);
+                                    } else {
+                                        routeLayer = new ol.layer.Vector({
+                                            source: routeSource,
+                                            style: new ol.style.Style({
+                                                stroke: new ol.style.Stroke({
+                                                    color: "red",
+                                                    width: 3
+                                                })
+                                            })
+                                        });
+                                        map.addLayer(routeLayer);
+                                    }
+                                });
+                        });
+                });
+        }
+
+        // Function to get the user's current location
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        // Function to show the user's position on the map
+        function showPosition(position) {
+            var coord = ol.proj.fromLonLat([position.coords.longitude, position.coords.latitude]);
+            map.getView().setCenter(coord);
+            map.getView().setZoom(16);
+
+            if (!startMarker) {
+                startMarker = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [addMarker(coord, 'You are here!')]
+                        
+                    })
+                });
+                map.addLayer(startMarker);
+            } else {
+                startMarker.getSource().clear();
+                startMarker.getSource().addFeature(addMarker(coord, 'You are here!'));
+            }
+        }
+    </script> {% endcomment %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% comment %} 
+ <div id="floating-panel">
+        <b>Start: </b>
+        <input id="start" type="textbox" >
+        <b>End: </b>
+        <input id="end" type="textbox" >
+        <input id="submit" type="button" value="Get Directions">
+    </div>
+    <div id="map"></div>
+    <script>
+        var locationName = "{{ location_name }}"; 
+        // Function to fetch coordinates from Nominatim
+        function fetchCoordinates(location) {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${location}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        var latitude = data[0].lat;
+                        var longitude = data[0].lon;
+                        var coordinates = [latitude, longitude];
+                        initMap(latitude, longitude, location); 
+                    } else {
+                        console.error('Location not found: ' + location);
+                    }
+                })
+                .catch(error => console.error('Error fetching location data:', error));
+        }
+        function initMap(latitude, longitude, location) {
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 7,
+                center: {lat: parseInt(latitude), lng: parseInt(longitude)} // Default to Sydney
+            });
+            var directionsService = new google.maps.DirectionsService;
+            var directionsRenderer = new google.maps.DirectionsRenderer;
+            directionsRenderer.setMap(map);
+
+            document.getElementById('submit').addEventListener('click', function() {
+                calculateAndDisplayRoute(directionsService, directionsRenderer);
+            });
+        }
+
+        function calculateAndDisplayRoute(directionsService, directionsRenderer) {
+            var start = document.getElementById('start').value;
+            var end = document.getElementById('end').value;
+            directionsService.route({
+                origin: start,
+                destination: end,
+                travelMode: 'DRIVING'
+            }, function(response, status) {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(response);
+                } else {
+                    window.alert('Directions request failed due to ' + status);
+                }
+            });
+        }
+        fetchCoordinates(locationName);
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key={{api}}&callback=initMap">
+    </script> {% endcomment %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
+
+
+
+{% comment %}
+
+ 
+    <h1>Live Location Map</h1>
+    <button onclick="getLocation()">Show My Location</button>
+    <div id="map"></div>
+    <script> 
+        var locationName = "{{ location_name }}";
+        alert(locationName)
+        // Function to fetch coordinates from Nominatim
+        function fetchCoordinates(location) {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${location}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        var latitude = data[0].lat;
+                        var longitude = data[0].lon;
+                        var coordinates = [latitude, longitude];
+                        initMap(latitude, longitude, location);
+                    } else {
+                        console.error('Location not found: ' + location);
+                    }
+                })
+                .catch(error => console.error('Error fetching location data:', error));
+        }
+
+        // Initialize and add the map
+        function initMap(latitude, longitude, location) {
+            var map = new google.maps.Map(document.getElementById('map'), {
+                center: {lat: 34.397, lng: 150.644},
+                zoom: 6
+            });
+            var infoWindow = new google.maps.InfoWindow;
+
+            // HTML5 geolocation
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var pos = {
+                        lat: latitude,
+                        lng: longitude
+                    };
+
+                    infoWindow.setPosition(pos);
+                    infoWindow.setContent(location );
+                    infoWindow.open(pos);
+                    map.setCenter(coordinates);
+                }, function() {
+                    handleLocationError(true, infoWindow, map.getCenter());
+                });
+            } else {
+                // Browser doesn't support Geolocation
+                handleLocationError(false, infoWindow, map.getCenter());
+            }
+        }
+
+        function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+            infoWindow.setPosition(pos);
+            infoWindow.setContent(browserHasGeolocation ?
+                                  'Error: The Geolocation service failed.' :
+                                  'Error: Your browser doesn\'t support geolocation.');
+            infoWindow.open(map);
+        }
+        var api = "your api"
+        fetchCoordinates(locationName);
+
+    </script> 
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key={{api}}&callback=initMap">
+    </script>
+
+
+
+
+
+
+ 
+    
+
+
+
+
+    <h1>Location: {{ location_name }}</h1>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        var locationName = "{{ location_name }}";
+
+        // Function to fetch coordinates from Nominatim
+        function fetchCoordinates(location) {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${location}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        var latitude = data[0].lat;
+                        var longitude = data[0].lon;
+                        var coordinates = [latitude, longitude];
+                        initMap(coordinates, locationName);
+                    } else {
+                        console.error('Location not found: ' + location);
+                    }
+                })
+                .catch(error => console.error('Error fetching location data:', error));
+        }
+
+        // Function to initialize the map
+        function initMap(coordinates, location) {
+            var map = L.map('map').setView(coordinates, 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+            }).addTo(map);
+
+            var marker = L.marker(coordinates).addTo(map)
+                .bindPopup('<b> Your Location </b><br />' + location).openPopup();
+        }
+
+        // Fetch coordinates for the location
+        fetchCoordinates(locationName);
+    </script> {% endcomment %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+  {% endblock %} {% include 'footertask.html' %} {% endif %}
+  
+  
+    <script src="{% static 'storeTask/js/img_task.js' %}"></script>
+</body>
+ 
